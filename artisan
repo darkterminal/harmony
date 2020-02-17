@@ -1,0 +1,70 @@
+#!/usr/bin/env php
+<?php
+
+require 'vendor/autoload.php';
+
+use Harmony\Support\Commands\GeneratorAuth;
+use Harmony\Support\Commands\GeneratorAuthScaffolding;
+use Harmony\Support\Commands\GeneratorController;
+use Harmony\Support\Commands\GeneratorMiddleware;
+use Harmony\Support\Commands\GeneratorModel;
+use Harmony\Support\Commands\GeneratorPasswordController;
+use Harmony\Support\Commands\GeneratorSeeders;
+use Harmony\Support\Commands\Migrate;
+use Harmony\Support\Commands\RouteLists;
+use Harmony\Support\Commands\Seeders;
+use Harmony\Support\Commands\SeedersTruncate;
+use Harmony\Support\Commands\Serve;
+use Dotenv\Dotenv;
+use Dotenv\Repository\Adapter\EnvConstAdapter;
+use Dotenv\Repository\Adapter\ServerConstAdapter;
+use Dotenv\Repository\RepositoryBuilder;
+use Phpmig\Console\Command;
+use Symfony\Component\Console\Application;
+
+$adapters = [
+    new EnvConstAdapter(),
+    new ServerConstAdapter(),
+];
+
+$repository = RepositoryBuilder::create()
+    ->withReaders($adapters)
+    ->withWriters($adapters)
+    ->immutable()
+    ->make();
+
+Dotenv::create($repository, __DIR__, null)->load();
+
+$app = new Application('Harmony Framework | Created by Betta Dev Indonesia', 'v1.3');
+
+$phpmig_commands = [
+    new Command\CheckCommand(),
+    new Command\DownCommand(),
+    new Command\GenerateCommand(),
+    new Command\InitCommand(),
+    new Command\MigrateCommand(),
+    new Command\RedoCommand(),
+    new Command\RollbackCommand(),
+    new Command\StatusCommand(),
+    new Command\UpCommand(),
+];
+foreach ($phpmig_commands as $command) {
+    $command->setName('db:' . $command->getName());
+}
+
+$app->addCommands($phpmig_commands);
+
+$app->add(new GeneratorController());
+$app->add(new GeneratorModel());
+$app->add(new GeneratorMiddleware());
+$app->add(new GeneratorAuth());
+$app->add(new GeneratorPasswordController());
+$app->add(new GeneratorAuthScaffolding());
+$app->add(new RouteLists());
+$app->add(new Serve());
+$app->add(new Migrate());
+$app->add(new Seeders());
+$app->add(new SeedersTruncate());
+$app->add(new GeneratorSeeders());
+
+$app->run();
